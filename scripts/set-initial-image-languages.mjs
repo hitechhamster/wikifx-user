@@ -1,0 +1,1 @@
+import {wrangler} from './wrangler-bounded.mjs';console.log(await wrangler(['d1','execute','wikifx-signal-hub','--remote','--command',"INSERT INTO settings(key,value) VALUES ('image_language_ko','supported'),('image_language_id','supported'),('image_language_th','unsupported') ON CONFLICT(key) DO UPDATE SET value=excluded.value",'--json']));

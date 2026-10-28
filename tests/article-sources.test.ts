@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {referenceFooter} from '../src/article-sources';
+test('system references are separate, escaped, and reject script URLs',()=>{const h=referenceFooter([{url:'https://example.com/a',title:'A <script> title'},{url:'javascript:alert(1)',title:'Unsafe'}],'en');assert.match(h,/^<blockquote>/);assert.match(h,/Reference links/);assert.doesNotMatch(h,/<script>|javascript:|Unsafe|Sources/);assert.match(h,/&lt;script&gt;/)});

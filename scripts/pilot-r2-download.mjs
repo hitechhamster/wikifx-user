@@ -1,0 +1,1 @@
+import fs from 'node:fs';import {wrangler} from './wrangler-bounded.mjs';const s=JSON.parse(fs.readFileSync('artifacts/facts-images/pilot-status.json'));for(const x of s)await wrangler(['r2','object','get','wikifx-signal-archive/images/'+x.image.id+'/original','--remote','--file','artifacts/facts-images/pilot/'+x.region_code+'.jpg']);console.log('Downloaded',s.length);

@@ -1,0 +1,7 @@
+import {chromium} from 'playwright';import fs from 'node:fs';
+const base='https://review.wikifxusers.com',browser=await chromium.launch({headless:true,channel:'chrome'}),page=await browser.newPage({viewport:{width:1280,height:900}});await page.goto(base);await page.waitForSelector('[data-pick]');
+const d=await(await fetch(base+'/api/review')).json(),all=d.regions.flatMap(r=>r.items),chosen=d.regions.find(r=>r.code==='SA').items.filter(x=>x.ai_rank&&x.review_state==='candidate').slice(0,2),others=all.filter(x=>x.picked&&!chosen.some(y=>y.id===x.id));
+async function post(path,body){const r=await page.request.post(base+'/api/review/'+path,{data:{...body,reviewed_by:'wikifx'},headers:{Origin:base}});if(!r.ok())throw Error(path+':'+await r.text());return r.json()}
+for(const x of others)await post('pick',{id:x.id,picked:false});for(const x of chosen)await post('pick',{id:x.id,picked:true});await page.reload();await page.getByRole('button',{name:'生成所选 2 篇',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[data-t="review"]').getAttribute('aria-selected')==='true');
+fs.writeFileSync('artifacts/flow3-live-test.json',JSON.stringify({chosen:chosen.map(x=>({id:x.id,title:x.title})),started:new Date().toISOString()},null,2));
+for(const x of others)await post('pick',{id:x.id,picked:true});console.log('Generated exactly two; review tab activated; other selections restored.');await browser.close();

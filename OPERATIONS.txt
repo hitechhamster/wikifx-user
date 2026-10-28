@@ -1,0 +1,170 @@
+CURRENT HANDOVER SNAPSHOT — 2026-10-28 Asia/Shanghai
+See HANDOVER.md and docs/deployment-snapshot.json for the current state.
+No deployment or production data changes were made for this handover.
+Worker 41c16e8e-7ba2-43b4-88af-ccb71839f2b0; live mode; generation cap100; submission cap60.
+Local Worker dry-run bundle matches production byte-for-byte; all four public assets match production.
+35 TypeScript unit tests and tsc pass. Docker engine is not running; container images were not rebuilt.
+Latest 12 content-only revisions were accepted by Content Hub: IDs248-259. Entire bottom source footer removed in those data copies only; regular pipeline still appends referenceFooter.
+Manual language-correct covers were installed without enabling failed provider languages. Original CMS records remain and editor cleanup is separate.
+This file continues below as an append-only HISTORICAL journal; earlier modes, counters and strategy descriptions are superseded by later entries and HANDOVER.md.
+
+WikiFX Signal Cloud — step 3 deployed, 2026-10-26
+
+Project: wikifx-signal-cloud
+Production review: https://review.wikifxusers.com/
+Production intake: POST https://hotspots.wikifxusers.com/api/v1/hotspots/daily-batches
+Isolated protocol acceptance: https://hotspots-test.wikifxusers.com/api/v1/hotspots/daily-batches
+D1 production: wikifx-signal-hub
+D1 synthetic fixtures: wikifx-signal-acceptance
+R2: wikifx-signal-archive
+Workflow: wikifx-signal-pipeline
+
+Current state:
+- Public review; reviewer name is self-declared, not an authenticated identity.
+- workers.dev and preview URLs disabled. Adding Access on the review custom domain
+  protects both static pages and review APIs without changing application code.
+- Intake requires a source-bound bearer token. No browser receives intake secrets.
+- SUBMISSION_MODE=dry_run. CONTENT_INGEST_TOKEN is not configured.
+- WRITER_READY=true. Cloud container writer verified with English and Indonesian dry runs on 2026-10-26.
+- CollectorContainer deployed: daily 01:00 UTC / 09:00 Asia/Shanghai, first run 2026-10-27.
+- The every-minute Cron dispatches already-recorded tasks and removes expired rate
+  buckets. It does not scrape, fetch Apify, import Hangzhou files, or poll Hangzhou.
+- Daily submission cap is DAILY_SUBMISSION_LIMIT=60; enforced by D1 behind the
+  serialized Coordinator, plus a rolling 60-second IP limit of 10 operations.
+- Failed jobs continue to consume their daily quota; retries must reuse their job.
+- legacy_hot is excluded from recommendations, selection and submission.
+
+Manual import completed once through the same HTTPS production intake protocol:
+manual-import-20261026 (Workflow ID); 158 items, 4 pages; SA merges india/pakistan.
+Do not rerun prepare-import for this date. The frozen manifest is at:
+R2 manual-import/2026-10-26.json
+R2 manual-import/2026-10-26-receipts.json
+Today's 8 original daily JSON/Markdown files are archived under:
+R2 hangzhou/daily/<market>/2026-10-26.<json|md>
+Historical migration verified: 230 items (73 legacy_hot), 2 AI runs, 8 AI calls, 1 schedule row; 241 original records retained in historical_records. All 562 files archived in hangzhou/history/2026-10-26/history.tgz with manifest. Historic content available=0, never mixed into current review.
+
+Local validation (no production writes):
+node node_modules/typescript/bin/tsc --noEmit
+node --import tsx --test tests/protocol.test.ts
+node tests/integration.mjs
+node tests/review-integration.mjs
+node tests/quota-integration.mjs
+Integration scripts only target http://127.0.0.1:8787. Test cleanup uses --local.
+
+Deployment while container build is deferred:
+node node_modules/wrangler/bin/wrangler.js deploy --containers-rollout=none
+
+Manual preselection uses the authenticated Cloudflare Workflow API, not a public
+admin endpoint. Pass kind=preselect, date, region. A fresh Workflow ID makes a new
+run; locked/reviewed regions are skipped. cachedRun can reference an existing AI
+response under R2 ai/ to reapply local gates without a paid model call.
+
+Secrets, entered interactively by the owner only:
+node node_modules/wrangler/bin/wrangler.js secret put DEEPSEEK_API_KEY
+node node_modules/wrangler/bin/wrangler.js secret put RADAR_INGEST_TOKEN
+node node_modules/wrangler/bin/wrangler.js secret put SIGNAL_INGEST_TOKEN
+Later, for collector migration:
+node node_modules/wrangler/bin/wrangler.js secret put APIFY_TOKEN
+node node_modules/wrangler/bin/wrangler.js secret put SERPER_API_KEYS
+Only when real Content Hub delivery is explicitly enabled:
+node node_modules/wrangler/bin/wrangler.js secret put CONTENT_INGEST_TOKEN
+Generate the two intake tokens independently with a password manager's
+cryptographically random generator (at least 32 random bytes each).
+Never put secret values in commands, files, logs, chat, URLs, or frontend assets.
+
+Before enabling the writer:
+1. Start a functioning Linux Docker engine; build and test the container.
+2. Run English and Indonesian dry-run article validation, including language and
+   source restrictions. Review generated HTML and frozen Content Hub payloads.
+3. Set WRITER_READY=true only once the container is verified.
+4. Keep SUBMISSION_MODE=dry_run and no CONTENT_INGEST_TOKEN until approved.
+5. Do not change external IDs or automatically resend previous dry-run jobs.
+
+Hangzhou was only read via SSH/SCP. 18082, 8091 and the 09:00 collector timer stay
+unchanged. No SEO Copilot files, configuration or services were changed.
+
+Writer validation: two final drafts completed in about 21 seconds each; language en/id verified. No Content Hub requests. Dry-run jobs remain selected. Final payloads: artifacts/draft-en-final-ingest.json and artifacts/draft-id-final-ingest.json. Four actual article calls including superseded drafts cost USD 0.006353808. Cached rerun audit rows retained with zero cost/tokens. Container release uses destroy() to prevent cached results surviving a rerun. Fresh-instance health probe passed. Historical migration complete; collector deployed for its first scheduled live run on 2026-10-27.
+
+Step 3 verification: 11 TypeScript tests + 3 Python converter tests and no-network container smoke passed. Collector health configured=true. Source Python code and configs reused; wrapper records exact Apify run IDs and AI token usage. Cloud result artifacts under cloud/YYYY-MM-DD/. No real collector or new Apify call was run during deployment. Manual comparison: python scripts/compare-daily.py --date YYYY-MM-DD. Uses local SSH/SCP read-only and uploads comparisons/YYYY-MM-DD.json to R2. No SSH key exists in Cloudflare. User will request runs on 2026-10-27, 28 and 29 after collection. Hangzhou AI collection cost cannot be recovered from existing daily JSON; report null with explanation rather than zero. Original Hangzhou account-window Apify settlement may mix concurrent runs and is labeled reported, not verified per-run.
+
+2026-10-26 evening acceptance:
+- Deployed generation/preview/submission split. SUBMISSION_MODE=live only after user authorized on HTTP 201/data.id evidence. Test receipt: articleId=195; no live articles auto-submitted.
+- Explicit generation quota100/day, submission quota60/day. Server-side picks; all draft sends still require a button click.
+- Deleted Codex heartbeat wikifx (WikiFX 对方批次到达检查). User prohibits future Codex polling automations without a new request.
+- Imported manual export via production authenticated intake: 227 items in 14 pages across 13 regions. Stable UUIDv5 batch identifiers. Complete raw file and converted manifest stored under R2 manual-import/. Ranking/category/article_type/topic_id verified per item.
+- Cleaned 172 duplicate RSS summaries. Normalized two August Indonesian dates (excluded as stale); one 104-source item capped at protocol100, all104 retained in raw archive.
+- Google public redirect resolution respects robots/consent; no bypass. Top15 + recommended + selected enrichment; per-region maximum20 attempted Serper searches, including failures. Keys rotate; exhausted keys are skipped using internal fingerprints. Never log keys.
+- Serper key replacement was explicitly authorized by user; input streamed in memory to Wrangler without project-file or command-argument storage.
+- Local editorial gates remove weak relevance, inconsistent titles, stale stories and duplicate topics. All final selection calls used stored model output after local corrections, avoiding additional selection AI charges.
+- Final audit: 23 recommendations in11 regions; TW/CN0. Other short regions intentionally not filled with weak content. 73 legacy_hot rows unchanged.
+- At final report snapshot:148 enriched records,27 with body(20full/7partial),31 with matching search snippets;102 Google redirects attempted/0resolved (robots restricted);177 business search attempts/42 successful credits, plus3 diagnostic attempts. AI estimateUSD0.1835793, Serper at public Starter rateUSD0.042; totalUSD0.2255793.
+- Reports: artifacts/radar-acceptance-2026-10-26.{html,json}; archived in R2 reports/2026-10-26/. Screenshots: artifacts/screenshots/review-{desktop,mobile}.png. Headless1280x900 and390x844, no overflow or page errors.
+-20 tests pass; local two-step DB integration passed before deployment. No Hangzhou service changes. Local-only comparison process remains manual on user request.
+
+2026-10-26 three-stage review deployed: candidate -> generating/draft -> approved -> sending -> sent/failed. Approval binds generation_request_id. Existing 8 unsent payloads migrated to draft, picks reset by 0009. Backup artifacts/pre-three-stage-20261026.sql. 13 batch preselection calls, USD 0.144990048; 2 acceptance articles USD 0.00194658. Live receipt 201 / Hub 196; other acceptance item remains draft. Report artifacts/flow3-acceptance-2026-10-26.html. Screenshots captured using headless Chromium only.
+2026-10-27 arrival/preselection repair
+- Every completed/partial non-empty intake batch independently enqueues preselect immediately; radar top-15 enrichment runs separately and can rerank afterward.
+- Removed region-wide locks from intake and preselection. Only candidate rows may be updated by intake, translation and ranking; drafts/approved/sending/sent/failed are preserved.
+- Commit rejects obsolete batch snapshots and legacy policy results. Recommendation picks are reset to picked for current candidate recommendations, excluding generated items.
+- Preselection validates all translations; retries missing translations and unsupported facts up to twice. Repair preserves original event grouping/classification. Failed reason extraction uses a literal summary phrase, or translated title when summary is missing.
+- Local stories sort ahead of major cross-region FX events, capped at one cross-region story. Political country restriction; LA excludes Brazil-only news. Simple translated-headline dedup complements event IDs.
+- Verified with in-memory SQLite ingestion test (no production fixtures), ranking tests, TypeScript check, and live API state/selection checks. No article generation or Content Hub send during this repair.
+- Production version 8057c407-9ec4-4fc2-8808-b684dac8e897. Collector, Hangzhou and other services unchanged.
+Final deployment 9acf6399-60c3-4c1e-85e8-216104c46eb2. 11:18 CST API verification: 36 candidate recommendations all picked; no missing Chinese translations or placeholder reasons. Three pre-existing drafts preserved. MY/AF/CN arrived 11:05:30 / 11:10:16 / 11:15:27, no noon missing-data reminder needed. Report artifacts/oct27-arrival-verification.html.
+2026-10-27 picks: default selection disabled in GET and AI commits. Today's existing candidate picks/preferences cleared (backup artifacts/picks-before-clear-20261027.json); new human picks preserved. Optimistic per-row update, 300ms coalesced background batch saves, rollback on failure, no pick-page polling; generation waits for pending saves. Candidate details lazy-loaded by region. Production f85a61bf-6a91-494f-815e-9ad0b2a885e9. Headless acceptance: 0.1-0.7ms synchronous row/footer updates, three rapid picks one POST, no extra dashboard GET, rollback and DOM identity passed. API 213246 uncompressed bytes. Test artifacts/pick-performance.json.
+2026-10-27 writer prompt v2 replacement:
+- Original full system/user export: artifacts/writer-prompt-current.md. User attachment copied verbatim to container/writer-prompt.md and artifacts/writer-prompt-v2.md; matching SHA256.
+- Explicit user model correction overrides the attachment's Pro suggestion: WRITER_MODEL=deepseek-flash (DeepSeek 4.1 Flash); preselection remains Flash. No Pro generation was started.
+- Runtime uses the attachment's System and thin-material blocks, its length targets, news/social material type, and partial/full content. HTML Markdown residue, meta narration, minimum length and language checks retry once. Language mismatches receive a high-accuracy pairwise check before rejection.
+- Deployment b41d80c0-c258-413a-95e3-2e38daec919c. Collector pinned to original digest; deploy confirmed no Collector changes. Hangzhou untouched.
+- Regeneration scope13:12 completed as draft; SA job3e75f4aa-299f-4aac-b28e-c379105ba42a remains failed LANGUAGE_MISMATCH_eo after retries. It is not approved or sent. Two unrelated older failed jobs were left untouched.
+- JP/MY/ID/KR comparison artifacts/writer-v2-comparison.html and .json. KR is an isolated preview because its original was already sent; sent record untouched. All4 samples use user-v2 and deepseek-flash, languagesja/en/id/ko. No Content Hub requests were made by this task.
+- Validation:26 TypeScript tests, tsc,5 Python writer tests passed. Headless comparison report:4 sections, no horizontal overflow. Title rewrite UI from attachment's optional development notes not implemented in this prompt replacement.
+2026-10-27 writer v3 / no investment advice:
+- User rules incorporated in container/writer-prompt.md; current copy artifacts/writer-v3/writer-prompt-v3.md, pre-change copy artifacts/writer-v3/prompt-before.md. Flash model unchanged.
+- No position sizing, trade direction/timing, stops, allocation/diversification or author price forecasts. Objective impact scope/mechanisms; account-security reminders and explicitly attributed third-party forecasts allowed. Third-party trading instructions are also excluded. Narrow deterministic advice checks plus manual editorial review.
+- Deployment ed10df53-629e-4e30-bdf8-5fb0c279d431; pinned Collector unchanged. Writer uses per-generation container identities. Lead headings normalized; Latin-language titles reject CJK-script output.
+- Pending scope12 (MY5, SA2, ID2, TW1, JP1, AF1), initially draft12/approved0. All regenerated and reviewed, final draft12/approved0. Six underwent editorial corrections (including Indonesian title/summary translation and removal of residual advice/unsupported narration). One policy-calendar piece was editorially rewritten after model advice checks failed. R2 saved content read back and hashes compared. Source attempts and edits are preserved locally and audit_events records each editorial revision.
+- Editorial preview revisions use source generation ID + -e1 to invalidate browser caches without counting editorial edits as additional AI generations. Source IDs recorded in audit_events. No delivery records created.
+- Full actual sent-payload audit:13 delivered,12live+1test. Found investment advice0. Explicitly attributed forecasts in Hub195/221 are permitted; other content is reported events or safety reminders. No correction copy or -v2 externalId required this round. Old sent texts were not modified. Audit is scoped to investment advice, not a blanket endorsement of old editorial quality.
+- Older pending drafts now remain visible on review page; approve and send support their dates while daily quotas remain based on action day. Existing approval safeguards remain.
+- Checks: tsc,26 TS tests,7 Python tests, advice/safety/forecast boundary checks. Reports artifacts/writer-v3/acceptance.html, sent-audit.json, final-drafts.json and live-verification.json. No Hangzhou changes or Content Hub requests.
+2026-10-27 sent-article regeneration:
+- User explicitly requested regenerating all previously delivered articles, regardless of advice audit result. Created13 separate correction items (12live+test195), linked via migration0010 article_corrections. Originals and delivery receipts unchanged.
+- External IDs reserved as original delivered ID without test prefix, plus -v2. Copies start held (release_confirmed0). Review UI labels original Hub ID and link; held approvals excluded from send count. Both reviewAction and deliver reject held corrections. Release only after explicit user confirmation that original deletion is complete. No release UI or automatic release added.
+- Reused stored enrichment/rumor evidence for copies; no collection rerun. Flash generated13 articles; failed attempts retried. All final copies are draft. Manual editorial corrections removed mixed-script paragraphs, attribution errors and unsupported statements; hashes verified after R2 save and preview revision IDs changed to invalidate caches.
+- Production231b0510-6822-4436-89ed-ed35b9a5ae8c. Both container images pinned unchanged in wrangler.corrections-deploy.json.
+- tsc,28TS tests,JS syntax passed. Headless UI/API verified13 draft copies,13 correction labels,13 exact contents/externalIds, POST submit409 CORRECTION_ON_HOLD. D1 verified original13 sent rows unchanged,0correction delivery rows,13held.
+- Report artifacts/sent-corrections/report.html; manifests, input snapshot, originals verification, final API payloads and editorial backups under artifacts/sent-corrections/. No Content Hub requests; no Hangzhou changes.
+2026-10-27 Claude writer / deterministic fact hints (partial acceptance blocked):
+- Writer-only OpenRouter anthropic/claude-sonnet-5.5, temperature0.3, JSON validation retries once, HTTP/network errors fail without DeepSeek fallback. OPENROUTER_API_KEY configured by explicit user authorization; no key in project files. Preselection unchanged.
+- Cost uses usage.cost or input2/output10 USD per million; article and article_preview logging updated. New no-specific-background-facts prompt sentence. UI-only yellow fact hints and count; not included in ingest payload. Rule-based names are heuristic, not exhaustive multilingual NER. Numeric normalization and alias matching tested; semantic attribution is not checked.
+- Backups25 under artifacts/claude-facts/before.json and materials.json. Samples JP/ID/KR failed OPENROUTER_HTTP_403; MY failed WRITER_START_HTTP_503. No automatic retry. Remaining21 not started. Read-only writer-auth-diagnostic Workflow confirmed Key200 and available credit. Awaiting user's OpenRouter error details; no raw key/account response is logged.
+- User authorized temporary cap130; restored100 while blocked. Current deployment8d8fb7dd-82e1-4e90-ba57-d29007d83a7e, writer digest6628f13fb7ea469d8a33535d05d709ce54cae93dc12179bca48536a4e73cb834; collector unchanged.
+- Original13 deliveries and13 held corrections unchanged; no CMS calls. Tests28TS,9writer,3fact tests; headless DOM highlight/XSS test passed. Report artifacts/claude-facts/report.html honestly marks missing new articles and heuristic caveats. Need complete Claude regeneration of25 and sample full texts after API problem resolved; temporary130 remains authorized for that run, restore100 afterward.
+
+2026-10-27 writer v6 completion
+- Deployment: 05718531-1353-408b-89f5-bdc4e3b6dfe4; writer image sha256:ce1c160d39fc64628723e46278e342c2ab312675a601148b7e5cb0017f440fb2. Collector image unchanged.
+- Writer deepseek-flash temperature 0.3; separate Flash AI audit 0.2. OpenRouter canceled/unused.
+- 25 unique drafts regenerated, all draft. 12 zero-match-warning (48%), 26 unmatched occurrences (1.04/article), 3 fact threshold red, 21 AI issues in 11 articles; TH audit has unanchored quote and remains needs_check.
+- Expanded meta blacklist caught initial JP/AR one each; both rewritten; final meta/Markdown flags 0.
+- Hub 214-223 original deliveries untouched. Hub216 correction returned to candidate; other corrections held with -v2 external IDs and release_confirmed=0. No delivery requested.
+- Generation limit restored from approved temporary170 to100, API confirms used142 and generating0. No generation allowance remains today under normal cap.
+- Phase2 ledger $0.091084884; combined fact-check and phase2 work $0.159612072 estimated usage cost; includes recorded retries/audits. Excludes earlier OpenRouter work.
+- Results: artifacts/rerun-v6/final.json, summary.json, report.html, final-verification.json. Three random different-language full samples: artifacts/rerun-samples.html (SA English, AR Arabic, TW Chinese); selection seed preserved.
+- Tests: 26 Python +29 TypeScript; tsc passes; headless desktop/mobile export no overflow/page errors.
+- Workflow describe may return internal_server10001 after successful audit; verify stored R2 audit or review_ai_calls before retrying to avoid duplicate AI spend.
+- No Hangzhou changes; no scheduler additions; no automatic send.
+
+2026-10-27 facts + image integration completed
+- Current Worker deployment 27d7294f-df52-4f02-8dd1-21948ce8d389. Writer pinned sha256:eb2d86be8ebd746aaa16cb39e8ffa7db5eec1bba67c53d0ab374f99df0b819ec; collector unchanged.
+- Fact checker deterministic-v3-low-false-positive: ignore number words, title-case headings, common multilingual terms; explicit title names/numbers remain checked. Original25 flags26 ->1 without rewrite; after5 requested rewrites final25 flags3, threshold red0.
+- Rewrote AF1, MY1, SA2, ID1 only. Other20 title/summary/body/AI/editorial checks verified unchanged. All25 draft; sent delivery records remain13. Cap temporarily150 was restored100; used148 today.
+- Image API AIGC_API_KEY presence verified, never printed/read. Max3 via coordinator, 15sec polls /10min, image language gates in settings image_language_<languageId>.
+- Supported: ko,id,zh-HK,en. Unsupported pending provider fix: th,ar,ja,vi,pt,es. Unsupported test images are hidden and omitted from attachments; human approval remains available.
+- 15 batch images succeeded,0 failed,mean197.1003 sec excluding queue. 10 initial language tests +1 TH clean-input retest. Current usable covers19 of25.
+- TH clean retest task f24c3300-dfd7-4767-9e90-466aff37506a, image row6b5ad494-e6d8-4a58-b8dd-4e3fec0bd828, client signal-TH-2026-10-27-8e422880dc55-v2-r4. Actual frozen content1791 chars, no Latin/Chinese/HTML/URLs. Still English image; keep th unsupported.
+- New image input freezes target title+summary+body plain text, strips references/URLs/foreign English bracket notes. Request snapshot images/<id>/input.json. Old initial3 requests had no snapshot; originalTH reconstructed from saved unchanged article and deployed conversion function, not claimed wire capture.
+- Relative provider media URLs normalized; validated public HTTPS redirects handled; retries preserve client_request_id, swaps use monotonic new version. Raw original/thumbnail inR2, base64 images[0] frozen at send; >10MB uses thumbnail. No CMS calls during this task.
+- Tests34 TS +30 Python; tsc. Reports: artifacts/facts-images-report.html, image-language-tests.html, th-image-debug.html; actual sanitized request and provider response in artifacts/facts-images/th-debug-packet.json.
+- No outstanding background image tasks. No Windows desktop-browser automation; all screenshots headless.

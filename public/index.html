@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>热点审核 · 三步流程原型</title>
+<!--
+  给开发的说明（审核页 v2 流程）：
+  - 三个页签：① 选题  ② 审稿  ③ 已送稿。每条内容在任一时刻只属于一个页签。
+  - 状态机：candidate(选题) → generating/draft(审稿, 未通过) → approved(审稿, 已通过) → sending → sent / failed(已送稿)。
+  - 选题页：只显示未生成的条目；每区前 3 默认勾选；底部按钮"生成所选 N 篇"，点击后这些条目立即移到审稿页（先显示"生成中"）。
+  - 审稿页：稿件全文直接展开（标题、摘要、正文），不需要再点"展开预览"。每篇三个动作：通过 / 重新生成 / 放回选题。
+    底部按钮"送出已通过 N 篇"——只送 approved 的；draft（未通过）永远不会被送出。
+  - 已送稿页：成功的显示 Content Hub 链接；失败的标红显示原因，可"重试"。
+  - 标题：非中文条目大字显示中文译名，原文标题小字在下面。稿件本身保持目标语言。
+  - 页签上显示数量徽标；底部操作栏随页签切换，只出现当前页签的那一个主按钮。
+  - 本文件是交互原型，数据为示例，生成/送稿为模拟。
+-->
+<style>
+:root{--ink:#1A1A1A;--muted:#5E5E5A;--line:#E4E3DD;--bg:#F6F6F3;--blue:#2148B8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink)}
+a{color:var(--blue)}
+.wrap{max-width:960px;margin:0 auto;padding:28px 16px 140px;display:flex;flex-direction:column;gap:16px}
+h1{margin:0;font-size:26px}.meta{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{min-height:46px;padding:0 16px;border:none;background:none;font:inherit;font-size:16px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;gap:8px}
+.tab.on{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+.badge{font-size:12px;min-width:22px;padding:1px 7px;border-radius:10px;background:#E9E8E2;color:#3D3D3A;text-align:center}
+.tab.on .badge{background:var(--ink);color:#fff}
+.hint{font-size:14px;color:#3D3D3A;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+section{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rh{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #ECEBE6}
+.code{font-size:12px;font-weight:700;color:var(--muted);background:#F0EFEA;border-radius:6px;padding:3px 7px}
+h2{margin:0;font-size:17px}
+.row{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-bottom:1px solid #F0EFEA}
+.row:last-child{border-bottom:none}
+.row.sel{background:#EEF2FC}
+.row input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--blue);flex-shrink:0;cursor:pointer}
+.cn{font-size:16px;font-weight:600;line-height:1.45}.orig{font-size:13px;color:var(--muted);margin-top:2px}
+.why{font-size:14px;color:#3D3D3A;margin-top:5px}
+.tags{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:7px;font-size:12px;color:var(--muted);align-items:center}
+.tag{padding:2px 8px;border-radius:10px}.R{background:#DCE6FA;color:#16337F}.S{background:#FBEBD3;color:#6B4600}.warn{background:#FBE4E1;color:#8A2216}
+.draft{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.draft.ok{border-color:#3B6D11;box-shadow:0 0 0 1px #3B6D11 inset}
+.dh{padding:12px 16px;border-bottom:1px solid #ECEBE6;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.st{font-size:12px;padding:3px 9px;border-radius:10px}
+.st.gen{background:#F0EFEA;color:var(--muted)}.st.wait{background:#FBEBD3;color:#6B4600}.st.ok{background:#E2F0DA;color:#24461A}.st.fail{background:#FBE4E1;color:#8A2216}
+.art{padding:14px 18px;font-size:15px;line-height:1.7}
+.art h3{margin:0 0 6px;font-size:18px}.art .sum{color:#3D3D3A;background:#F6F6F3;border-radius:8px;padding:8px 12px;margin:8px 0}
+.art p{margin:8px 0}
+.acts{display:flex;gap:10px;padding:12px 16px;border-top:1px solid #ECEBE6;flex-wrap:wrap}
+.btn{min-height:40px;padding:0 16px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer;border:1px solid #D6D5CE;background:#fff;color:var(--ink)}
+.btn.pri{background:#3B6D11;border-color:#3B6D11;color:#fff}.btn.pri.on{background:#E2F0DA;color:#24461A;border-color:#3B6D11}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.sent{display:flex;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid #F0EFEA;flex-wrap:wrap}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:15px}
+.foot{position:fixed;left:0;right:0;bottom:0;padding:0 16px 16px;pointer-events:none}
+.fbar{max-width:928px;margin:0 auto;background:var(--ink);color:#fff;border-radius:12px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;pointer-events:auto}
+.fbar .s{flex:1;min-width:200px}.fbar b{display:block;font-size:16px;font-weight:500}.fbar span{font-size:13px;color:#C9C8C1}
+.main{min-height:48px;padding:0 22px;border-radius:10px;border:none;font:inherit;font-size:16px;font-weight:600;background:#fff;color:var(--ink);cursor:pointer}
+.main:disabled{background:#3D3D3A;color:#A9A8A1;cursor:not-allowed}
+.reviewer{font-size:14px}.reviewer input{border:1px solid var(--line);border-radius:7px;padding:8px;font:inherit;max-width:190px}.more{border:0;background:none;color:var(--blue);padding:12px 16px;cursor:pointer}.material-warning{color:#8a5b13}.art{overflow-wrap:anywhere}.art img{max-width:100%}.art table{max-width:100%;display:block;overflow:auto}.cn,.orig{overflow-wrap:anywhere}.row>div{min-width:0}.source-link{font-size:12px}.summary{font-size:13px;color:var(--muted);padding:14px}.foot .main{min-width:180px}@media(max-width:500px){.tab{padding:0 8px;font-size:14px}.fbar .s{min-width:100%;}.fbar .main{width:100%}.wrap{padding-bottom:190px}.art{padding:12px}.rh{flex-wrap:wrap}}</style>
+</head>
+<body>
+<div class="wrap">
+  <div><div class="meta"><span id="date"></span></div><h1>今日热点审核</h1></div>
+  <div class="reviewer"><label for="who">审核人</label> <input id="who" list="names" maxlength="80"><datalist id="names"><option value="wikifx"></datalist></div><div class="tabs" role="tablist">
+    <button class="tab" data-t="pick" role="tab">① 选题 <span class="badge" id="bPick"></span></button>
+    <button class="tab" data-t="review" role="tab">② 审稿 <span class="badge" id="bReview"></span></button>
+    <button class="tab" data-t="sent" role="tab">③ 已送稿 <span class="badge" id="bSent"></span></button>
+  </div>
+  <div class="hint" id="hint"></div>
+  <div id="view" style="display:flex;flex-direction:column;gap:14px"></div>
+</div>
+<div class="foot"><div class="fbar"><div class="s"><b id="fT"></b><span id="fS"></span></div><button class="main" id="fBtn" type="button"></button></div></div>
+<script src="/review-v3.js" defer></script>
+</body></html>

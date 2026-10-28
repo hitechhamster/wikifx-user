@@ -1,0 +1,119 @@
+# ============================================================
+# 巴基斯坦地区 —— 外汇社媒热点
+#
+# 市场特点：
+#   - 央行是 SBP（State Bank of Pakistan），证券监管是 SECP，
+#     查处非法外汇/地下钱庄的是 FIA（联邦调查局），三家分工和印度印尼都不同
+#   - hawala / hundi（地下汇款）和 interbank vs open market 汇差是本地独有的
+#     持续热点，IMF 贷款进程也直接牵动卢比
+#   - 财经讨论几乎全用英语（Dawn、Business Recorder 等主流媒体都是英文），
+#     乌尔都语内容以民生为主，金融实质内容少，所以只判英语
+# ============================================================
+
+region:
+  name: pakistan
+  display: 巴基斯坦
+
+x_settings:
+  lang: en
+  max_items_per_query: 90
+
+scoring:
+  # 巴基斯坦财经推特体量小于印度，粉丝门槛跟印尼看齐
+  min_author_followers: 100
+  require_language: en
+  min_score: 0.08
+
+x_queries:
+  - name: 卢比与SBP
+    query: '(PKR OR "Pakistani rupee" OR USDPKR OR "State Bank of Pakistan" OR SBP) (record low OR devalu OR depreciat OR falls OR gains OR intervention OR "policy rate")'
+    min_faves: 4
+    weight: 1.5
+
+  - name: 监管与警示
+    query: '(SECP OR SBP OR "State Bank") (unauthorised OR unauthorized OR illegal OR licence OR license OR penalty OR banned OR warning OR action) (forex OR exchange OR broker OR company)'
+    min_faves: 2
+    weight: 2.0
+
+  - name: 执法与地下钱庄
+    query: '(FIA OR "Federal Investigation Agency") (hawala OR hundi OR "illegal forex" OR "currency smuggling" OR raid OR arrested OR crackdown)'
+    min_faves: 2
+    weight: 1.9
+
+  - name: 外汇券商与诈骗
+    query: '(Pakistan OR Pakistani) ("forex trading" OR "forex broker" OR "trading app" OR "investment scheme") (scam OR fraud OR illegal OR ban OR warning OR arrested OR ponzi)'
+    min_faves: 2
+    weight: 1.8
+
+  # 出金投诉：需求里优先级最高的类别，但泛化查询抓不到，必须单独设组
+  - name: 出金与提现投诉
+    query: '(Pakistan OR PKR OR "Pakistani") (broker OR platform OR app) (withdrawal OR withdraw OR payout) (problem OR denied OR delayed OR stuck OR pending OR refused OR blocked)'
+    min_faves: 2
+    weight: 2.0
+
+  - name: 巴基斯坦宏观经济
+    query: '(Pakistan OR Pakistani) (inflation OR CPI OR "forex reserves" OR IMF OR "current account" OR remittance) (rupee OR PKR OR dollar OR economy)'
+    min_faves: 4
+    weight: 1.3
+
+  - name: 汇市与汇差
+    query: '(Pakistan OR PKR) ("open market" OR "interbank" OR "exchange rate" OR "exchange companies" OR ECAP) (rate OR gap OR premium OR dollar)'
+    min_faves: 2
+    weight: 1.2
+
+reddit_subreddits:
+  - name: pakistan
+    weight: 1.0
+
+reddit_settings:
+  min_upvotes: 8
+
+serper_fraud_news:
+  enabled: true
+  window_hours: 48
+  tbs: qdr:d2
+  max_items_per_query: 8
+  group_weight: 2.8
+  queries:
+    - name: Serper 巴基斯坦外汇诈骗
+      query: '(Pakistan OR Pakistani) (forex OR "forex broker" OR "trading app" OR "investment scheme") (scam OR fraud OR ponzi OR illegal OR arrested)'
+    - name: Serper 巴基斯坦假平台与出金
+      query: '(Pakistan OR Pakistani) (broker OR trading platform OR investment app) (withdrawal OR payout OR frozen funds OR phishing OR "fake website")'
+
+# 一手来源：官方机构账号。命中即视为一手来源，可直接支撑 Strong 判定
+official_accounts:
+  - StateBank_Pak
+  - SECPakistan
+  - Financegovpk
+  - FIANational
+
+# 可信媒体域名。用于统计「有几家可信媒体报道」
+trusted_media:
+  - dawn.com
+  - brecorder.com
+  - thenews.com.pk
+  - profit.pakistantoday.com.pk
+  - tribune.com.pk
+  - geo.tv
+  - arynews.tv
+  - bloomberg.com
+  - reuters.com
+
+noise_patterns_extra:
+  - '\b(sure ?shot|guaranteed (profit|returns?)|double your money|100% profit)\b'
+  - '\b(join (our )?telegram|whatsapp group|dm for signals|paid group)\b'
+
+signal_boost_patterns_extra:
+  - '\b(fia raid|crackdown|arrested|seized|show cause|notice issued)\b'
+  - '\b(policy rate|monetary policy committee|imf (tranche|review|programme|program))\b'
+
+# ------------------------------------------------------------
+# 外汇主题闸：不命中任一条即丢弃
+# ------------------------------------------------------------
+topic_patterns:
+  - '\b(PKR|rupee|USDPKR|forex|foreign exchange|currency|exchange rate)\b'
+  - '\b(SBP|State Bank|SECP|FIA|ECAP|monetary policy|policy rate)\b'
+  - '\b(dollar|USD|remittance|forex reserves|hawala|hundi)\b'
+  - '\b(broker|brokerage|trading (app|platform|account)|exchange company)\b'
+  - '\b(IMF|inflation|CPI|current account|trade deficit)\b'
+  - '\b(gold|bullion|PSX|KSE-?100)\b'

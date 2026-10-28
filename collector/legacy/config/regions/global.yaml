@@ -1,0 +1,84 @@
+# ============================================================
+# 全球英文圈 —— 外汇社媒热点
+# 一手消息基本都是英文首发，适合做国际大盘热点的基准线
+# ============================================================
+
+region:
+  name: global
+  display: 全球英文圈
+
+x_settings:
+  lang: en
+  max_items_per_query: 60
+
+x_queries:
+  - name: 美联储与货币政策
+    query: '(FOMC OR "rate cut" OR "rate hike" OR Powell OR "Fed minutes" OR "dot plot") (dollar OR USD OR forex OR DXY)'
+    min_faves: 50
+    weight: 1.5
+
+  - name: 关键经济数据
+    query: '(NFP OR "nonfarm payrolls" OR CPI OR PCE OR "jobs report" OR "inflation data") (USD OR dollar OR EURUSD OR markets)'
+    min_faves: 50
+    weight: 1.4
+
+  - name: 各国央行动向
+    query: '(ECB OR "Bank of Japan" OR BOJ OR "Bank of England" OR SNB OR PBOC OR RBA) (currency OR intervention OR policy OR yen OR euro)'
+    min_faves: 40
+    weight: 1.4
+
+  - name: 主要货币对异动
+    query: '(EURUSD OR USDJPY OR GBPUSD OR AUDUSD OR USDCNH OR DXY) (breaking OR surges OR plunges OR breaks OR collapse OR spike)'
+    min_faves: 40
+    weight: 1.2
+
+  - name: 黄金与避险
+    query: '(XAUUSD OR "gold price" OR "safe haven") (record OR surges OR plunges OR breaks OR rally)'
+    min_faves: 60
+    weight: 1.1
+
+  - name: 监管与券商风险
+    query: '("forex broker" OR FCA OR ASIC OR CySEC OR NFA OR "prop firm") (fine OR fined OR ban OR banned OR warning OR scam OR fraud OR license OR collapse)'
+    min_faves: 15
+    weight: 1.8
+
+  - name: 地缘与宏观突发
+    query: '(tariff OR sanctions OR "trade war" OR "currency war" OR devaluation) (dollar OR yuan OR euro OR yen OR currency)'
+    min_faves: 60
+    weight: 1.3
+
+reddit_subreddits:
+  - name: Forex
+    weight: 1.3
+  - name: Daytrading
+    weight: 1.0
+  - name: economy
+    weight: 1.2
+  - name: economics
+    weight: 1.2
+
+reddit_settings:
+  min_upvotes: 20
+
+serper_fraud_news:
+  enabled: true
+  window_hours: 48
+  tbs: qdr:d2
+  max_items_per_query: 8
+  group_weight: 2.8
+  queries:
+    - name: Serper 全球外汇诈骗
+      query: '(forex OR "FX broker" OR "currency trading" OR "trading platform") (scam OR fraud OR "clone firm" OR "investment scam" OR warning)'
+    - name: Serper 全球假平台与出金
+      query: '(forex broker OR trading platform OR investment app) (withdrawal OR payout OR frozen funds OR phishing OR "fake website")'
+
+# ------------------------------------------------------------
+# 外汇主题闸：不命中任一条即丢弃
+# ------------------------------------------------------------
+topic_patterns:
+  - '\b(forex|foreign exchange|currency|currencies|FX)\b'
+  - '\b(EURUSD|USDJPY|GBPUSD|AUDUSD|USDCAD|USDCHF|USDCNH|DXY|XAUUSD)\b'
+  - '\b(dollar|euro|yen|sterling|pound|yuan|franc|greenback)\b'
+  - '\b(Fed|FOMC|ECB|BOJ|BOE|SNB|PBOC|RBA|central bank|rate (cut|hike))\b'
+  - '\b(CPI|PCE|NFP|nonfarm|inflation|payrolls|GDP)\b'
+  - '\b(gold|bullion|safe haven|broker|brokerage|prop firm)\b'

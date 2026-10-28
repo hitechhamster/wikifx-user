@@ -1,0 +1,123 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "wikifx-signal-hub",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-26",
+  "account_id": "6958ba579531c49c8cc15aaa2a62dfe6",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "review.wikifxusers.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "hotspots.wikifxusers.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "hotspots-test.wikifxusers.com",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wikifx-signal-hub",
+      "database_id": "a3b7d718-0ef1-4db0-81e0-bcd562663f15",
+      "migrations_dir": "migrations"
+    },
+    {
+      "binding": "TEST_DB",
+      "database_name": "wikifx-signal-acceptance",
+      "database_id": "2373de8f-6018-4551-8a8f-e891ee1d7002",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ARCHIVE",
+      "bucket_name": "wikifx-signal-archive"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "COORDINATOR",
+        "class_name": "Coordinator"
+      },
+      {
+        "name": "WRITER",
+        "class_name": "ArticleContainer"
+      },
+      {
+        "name": "COLLECTOR",
+        "class_name": "CollectorContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "Coordinator",
+        "ArticleContainer"
+      ]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "CollectorContainer"
+      ]
+    }
+  ],
+  "containers": [
+    {
+      "class_name": "ArticleContainer",
+      "image": "./container/Dockerfile",
+      "max_instances": 2,
+      "instance_type": "standard-1"
+    },
+    {
+      "class_name": "CollectorContainer",
+      "image": "./collector/Dockerfile",
+      "max_instances": 1,
+      "instance_type": "standard-1"
+    }
+  ],
+  "workflows": [
+    {
+      "binding": "PIPELINE",
+      "name": "wikifx-signal-pipeline",
+      "class_name": "Pipeline"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *",
+      "0 1 * * *"
+    ]
+  },
+  "vars": {
+    "REVIEW_HOST": "review.wikifxusers.com",
+    "INGEST_HOST": "hotspots.wikifxusers.com",
+    "DAILY_SUBMISSION_LIMIT": "60",
+    "DEFAULT_REVIEWER": "wikifx",
+    "DEEPSEEK_MODEL": "deepseek-flash",
+    "WRITER_MODEL": "deepseek-flash",
+    "SUBMISSION_MODE": "live",
+    "WRITER_READY": "true",
+    "DAILY_GENERATION_LIMIT": "100"
+  },
+  "observability": {
+    "enabled": false
+  },
+  "dev": {
+    "enable_containers": false
+  }
+}

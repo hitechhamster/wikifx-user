@@ -1,0 +1,9 @@
+import fs from 'node:fs';import {chromium} from 'playwright';
+const scope=JSON.parse(fs.readFileSync('artifacts/facts-images/retry-scope.json')),dir='artifacts/facts-images';const b=await chromium.launch({headless:true,channel:'chrome'});const outcomes=[];
+try{const p=await b.newPage();await p.goto('https://review.wikifxusers.com');for(let start=0;start<scope.length;start+=2){const group=scope.slice(start,start+2);const reply=await p.evaluate(async ids=>{const r=await fetch('/api/review/regenerate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids,reviewed_by:'wikifx'})});return {status:r.status,body:await r.json()}},group.map(x=>x.id));fs.appendFileSync(dir+'/retry-run.jsonl',JSON.stringify({at:new Date().toISOString(),ids:group.map(x=>x.id),...reply})+'\n');if(reply.status!==202)throw Error('Regeneration rejected '+reply.status);console.log('Started',start+1,'-',Math.min(start+2,scope.length));
+ const deadline=Date.now()+12*60*1000;let done=false;
+ while(Date.now()<deadline){await new Promise(r=>setTimeout(r,12000));const rows=await p.evaluate(async ids=>{const d=await(await fetch('/api/review')).json();return d.regions.flatMap(r=>r.items).filter(x=>ids.includes(x.id))},group.map(x=>x.id));if(rows.length!==group.length)continue;if(rows.some(x=>x.review_state==='generating'))continue;
+  for(const x of rows){const article=x.payload_key?await p.evaluate(async id=>await(await fetch('/api/articles/'+id)).json(),x.job_id):null;outcomes.push({...x,article});console.log(x.region_code,x.review_state,x.error||'',JSON.stringify({facts:article?.fact_check?.count,meta:article?.editorial_check?.count,ai:article?.ai_review?.count,ai_state:article?.ai_review?.state}));}fs.writeFileSync(dir+'/retry-after.json',JSON.stringify(outcomes,null,2));done=true;break;}
+ if(!done)throw Error('Batch timed out; do not resubmit blindly');}
+ console.log('FINISHED',outcomes.length);
+}finally{await b.close()}

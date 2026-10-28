@@ -1,0 +1,7 @@
+requests>=2.31
+PyYAML>=6.0
+Flask>=3.0
+bleach>=6.0
+Markdown>=3.5
+waitress>=3.0
+openai>=1.0

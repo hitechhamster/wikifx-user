@@ -1,0 +1,1 @@
+import fs from 'node:fs';import {wrangler} from './wrangler-bounded.mjs';const id=JSON.parse(fs.readFileSync('artifacts/facts-images/th-retest-start.json')).body.id;await wrangler(['r2','object','get','wikifx-signal-archive/images/'+id+'/original','--remote','--file','artifacts/facts-images/pilot/TH-r4.jpg']);console.log('Downloaded TH retest');

@@ -1,0 +1,168 @@
+# ============================================================
+# 公共配置 —— 所有地区共用
+# 地区专属的关键词/板块在 config/regions/*.yaml
+# 同名字段以地区配置为准；noise_patterns 用 noise_patterns_extra 追加
+# ============================================================
+
+run:
+  lookback_hours: 24        # 回溯时间窗（小时）
+  top_n: 50                # 热点榜输出条数
+  max_cost_usd: 0.50       # 单次运行成本下限保险丝，余额不足则中止
+
+x_settings:
+  query_type: Top          # Top = 按热度，Latest = 按时间
+  max_items_per_query: 90
+  lang: en                 # 默认语种，单个查询组可用自己的 lang 覆盖
+  # 这个 X actor 在 Top 模式零命中时会返回 15 条自己的推广占位行。
+  # 出现这种“全占位”响应时，保持相同 since 窗口，用 Latest + 0 互动门槛重试一次；
+  # 二次仍为空才视为当天确无内容，绝不通过去掉 since 捞旧推文。
+  retry_empty_with_latest: true
+  fallback_min_faves: 0
+
+reddit_settings:
+  # 默认关闭：实测这个 actor 占了总成本 71%（两次各 $0.13-0.18），
+  # 每次都跑满 600s 超时，只抢救回 20 来条且大多跑题。
+  # 要开的话建议先换成 Reddit 官方 OAuth API（免费）。
+  enabled: false
+  sort: top
+  time: day
+  max_items_per_sub: 25
+  min_upvotes: 15
+
+# ------------------------------------------------------------
+# 噪音过滤：命中任一正则即丢弃（不区分大小写）
+# 这是信噪比的关键，实测原始数据约7成是这类内容
+# ------------------------------------------------------------
+noise_patterns:
+  # 晒单炫耀
+  - '\b(before and after|no words|work of art|easy money|another win|banked|profit secured)\b'
+  - '\b(my (account|profit|gains)|these gains|look at this)\b'
+  # Prop firm / 引流广告
+  - '\b(prop ?firm|funded account|passed (the )?challenge|payout|\d+k account|fundingpips|ftmo)\b'
+  - '\b(dm me|dm for|join (my|our)|link in bio|sign ?up (now|here)|use code|discount code)\b'
+  - '\b(signal group|free signals|vip (group|signals)|telegram (group|channel)|whatsapp)\b'
+  - '\b(copy ?trad|mentorship|my course|academy|masterclass|1on1|1-on-1)\b'
+  # 无实质内容的喊单
+  - '^(buy|sell|long|short)\s+\w+\s*[!.]*$'
+  - '\b(who''s with me|lets go+|lfg|to the moon|congrats?)\b'
+  # 抽奖/互动农场
+  - '\b(giveaway|retweet to win|like and (rt|retweet)|tag \d+ friends)\b'
+
+# 命中即加分：真正的新闻/事件信号词
+signal_boost_patterns:
+  - '\b(breaking|just in|exclusive|announces?|announced)\b'
+  - '\b(cuts? rates?|hikes? rates?|holds? rates?|basis points?|bps)\b'
+  - '\b(intervention|intervened|emergency|unscheduled)\b'
+  - '\b(fined|penalty|lawsuit|charged|indicted|revoked|suspended|seized|raided)\b'
+  - '\b(record (high|low)|all-time (high|low)|\d+-year (high|low))\b'
+
+# ------------------------------------------------------------
+# 打分权重
+# ------------------------------------------------------------
+scoring:
+  x_like_weight: 1.0
+  x_retweet_weight: 2.5     # 转发比点赞更能说明传播度
+  x_reply_weight: 1.2
+  x_quote_weight: 2.0
+  reddit_upvote_weight: 1.0
+  reddit_comment_weight: 2.5
+
+  recency_halflife_hours: 10   # 时效半衰期
+  author_weight_cap: 1.6       # 大V加权上限，防止单一账号霸榜
+  signal_boost: 1.35           # 命中新闻信号词的乘数
+  # Serper 独立新闻候选没有点赞/转发，给它稳定基础分，避免在社媒排序时被误杀。
+  serper_news_base_score: 60
+  min_score: 0.15              # 低于此分不进榜。原为 1.0，实测把印度 87 条保留砍到只剩
+                               # 39 条参与聚类，是话题数上不去的第二大瓶颈
+
+  min_text_length: 30          # 少于此字数视为无实质内容
+  min_author_followers: 150    # X 作者粉丝门槛。原为 800，实测这一刀砍掉的量比其他
+                               # 所有过滤加起来还多两倍（印度 122/231），而出金投诉、
+                               # 维权爆料这类最该抓的内容恰恰来自小号
+  min_latin_ratio: 0.85        # 拉丁字母最低占比，剔除日文/俄文等非拉丁文字
+  require_language: en         # 目标语种(en/id)，用功能词判定；留空则不判
+
+# ------------------------------------------------------------
+# 事件聚类：用实体重叠系数，不用词 Jaccard（长文本会被稀释到 0.1 以下）
+# ------------------------------------------------------------
+clustering:
+  overlap_threshold: 0.25      # 实体重叠系数阈值 |A∩B|/min(|A|,|B|)
+                               # 实测 0.40→0.25 能让印度多合并 9 个簇；
+                               # 再往下收益很小，因为多数条目本来就是不同的事
+  min_shared_terms: 2          # 至少共享几个实体才算同一事件，防误合并
+  max_cluster_size: 8
+
+# ------------------------------------------------------------
+# 机会分与三级分流
+# ------------------------------------------------------------
+opportunity:
+  # 三个维度的权重，按需求文档定
+  weights:
+    traffic: 0.55        # 流量潜力
+    editorial: 0.25      # 编辑相关度
+    evidence: 0.20       # 证据可信度
+
+  # 流量潜力的内部构成，各项都归一化到 0~1 后加权
+  traffic:
+    recency: 0.20        # 发布时间越近越高
+    media_count: 0.25    # 报道媒体越多越高
+    platform_count: 0.05 # 覆盖平台越多越高。目前只有 X，恒为单平台，
+                         # 权重压到最低；重开 Reddit 后再调高
+    query_groups: 0.15   # 命中不同查询组越多越高
+    engagement: 0.20     # 点赞评论转发
+    search_intent: 0.15  # 诈骗/监管/出金等高搜索意图类别加分
+    media_cap: 3         # 报道媒体数达到几家算满分
+    group_cap: 3         # 命中查询组数达到几个算满分
+    engagement_cap: 5000 # 互动量达到多少算满分（加权后）
+
+  # 没有分级闸门后，极低互动的例行官号帖会凭一手来源拿高证据分而冲到榜首。
+  # 这里不是过滤：所有话题仍保留、仍可按类别筛选；只是把总机会分按真实传播
+  # 信号做平滑降权。加权互动达到 20 即不折扣，0 互动保留 25% 的分数，避免
+  # 把刚发布但尚未累积互动的真新闻完全抹掉。
+  engagement_decay:
+    full_at: 20
+    floor: 0.25
+
+  # 编辑相关度的内部构成
+  editorial:
+    category: 0.55       # 类别本身的编辑价值
+    group_weight: 0.25   # 查询组权重（监管类查询组权重最高）
+    mentions: 0.20       # 被多少条内容提及
+    mention_cap: 5
+
+  # 证据可信度：按最强的一条证据取值
+  evidence:
+    first_party: 1.00    # 官方账号发布（一手来源）
+    media_2plus: 0.85    # 两家及以上可信媒体报道
+    media_1: 0.55        # 一家可信媒体
+    media_untrusted: 0.35  # 有外部报道但不在白名单内
+    social_only: 0.15    # 只有社媒单方说法
+    # 相关性校验：搜到的报道要和这条推讲同一件事才算佐证。
+    # 检索是按话题关键词搜的，不校验的话「提到某个热词」就能拿满分证据
+    relevance:
+      min_shared_entities: 2   # 报道与推文至少共享几个实体
+      overlap_threshold: 0.25  # 实体重叠系数下限
+    # 诈骗/出金/平台指控类若证据不足，再乘这个系数。
+    # 需求明确：这类不因「负面严重」就自动升 Strong
+    allegation_discount: 0.6
+
+  # 注：Strong / Verify / Watch 三级分流已移除，榜单直接按机会分降序排。
+  # 证据强度不再当闸门用，改为机会分里的一个分项（权重 20%）+ 卡片上的展示维度，
+  # 由编辑自己看「几家媒体佐证 / 是否一手来源」来判断。
+
+  # 每日跑批时给多少个话题做检索。检索是为了拿证据，
+  # 但每个话题一次 Serper 调用，全量搜太贵也太慢
+  search_top_n: 50
+
+  # 诈骗话题提高排序权重；来自 Serper 的独立新闻发现源加权更高，但仍保留
+  # 证据折扣及交叉检索，不能把单一未核实负面报道直接顶到榜首。
+  fraud_priority:
+    base_multiplier: 1.35
+    serper_news_multiplier: 1.65
+
+# Top 8 汇总榜（跨市场）
+top_board:
+  size: 8
+  markets: [indonesia, india, pakistan]
+  min_percentile: 0.40     # 低于本市场 40 分位的不参与 Top 8
+  quota_per_market: 1      # 每个市场至少保底几个名额

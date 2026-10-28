@@ -1,0 +1,3 @@
+import fs from 'node:fs';import {wrangler} from './wrangler-bounded.mjs';
+const ids=JSON.parse(fs.readFileSync('artifacts/claude-facts/sample-status.json')).map(x=>x.generation_request_id);const sql=`SELECT id,region_code,model,prompt_tokens,completion_tokens,estimated_cost_usd,error_code FROM review_ai_calls WHERE id IN (${ids.map(x=>"'"+x+"'").join(',')}); SELECT count(*) total FROM delivery_jobs WHERE state='sent'; SELECT count(*) held FROM article_corrections WHERE release_confirmed=0;`;
+const r=await wrangler(['d1','execute','wikifx-signal-hub','--remote','--command',sql,'--json']);fs.writeFileSync('artifacts/claude-facts/verification.json',r);console.log(r);

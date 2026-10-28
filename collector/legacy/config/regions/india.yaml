@@ -1,0 +1,137 @@
+# ============================================================
+# 印度地区 —— 外汇社媒热点
+#
+# 市场特点：
+#   - 散户通过境外经纪商做外汇受 FEMA 外汇管制约束，RBI 定期更新
+#     "Alert List"（未授权平台名单），这是印度独有的高频热点
+#   - 执法方除 RBI/SEBI 外还有 ED（执法局），突击查处外汇/博彩App是常态
+#   - 印度财经推特几乎全用英文，印地语（天城文）占比很低，
+#     所以保持 require_latin_script 开启，不单独做印地语查询组
+# ============================================================
+
+region:
+  name: india
+  display: 印度
+
+x_settings:
+  lang: en
+  max_items_per_query: 90
+
+scoring:
+  min_author_followers: 150
+  require_language: en         # 印度财经讨论以英文为主，天城文内容极少
+
+x_queries:
+  - name: 卢比与RBI
+    query: '(rupee OR USDINR OR INR OR "Reserve Bank of India" OR RBI) (record low OR intervention OR repo rate OR depreciat OR falls OR defends)'
+    min_faves: 8
+    weight: 1.5
+
+  - name: 监管与警示名单
+    query: '(RBI OR SEBI OR "Alert List" OR FEMA) (unauthorised OR unauthorized OR forex OR platform OR penalty OR banned OR violation)'
+    min_faves: 3
+    weight: 2.0
+
+  - name: 执法与爆雷
+    # 不能用裸 ED：印度政治推特上 ED/scam 满天飞（RICE SCAM、CGPSC scam），
+    # 必须锁死在外汇/交易语境里
+    query: '("Enforcement Directorate" OR "ED raid" OR CBI) (forex OR "trading app" OR "trading platform" OR "forex broker" OR "investment app") (raid OR seized OR fraud OR arrest)'
+    min_faves: 3
+    weight: 1.9
+
+  - name: 外汇券商与诈骗
+    query: '(India OR Indian) ("forex trading" OR "forex broker" OR "trading app") (scam OR fraud OR illegal OR ban OR warning OR arrested)'
+    min_faves: 3
+    weight: 1.8
+
+  - name: 印度宏观经济
+    # GDP 单独用会招来党派宣传，必须绑定汇率/外储语境
+    query: '(India OR Indian) (inflation OR CPI OR "trade deficit" OR "forex reserves" OR "current account" OR tariff) (rupee OR INR OR dollar OR RBI OR currency)'
+    min_faves: 8
+    weight: 1.3
+
+  - name: 黄金与大宗
+    query: '(India OR Indian) ("gold price" OR "gold import" OR "gold duty" OR MCX) (surge OR record OR falls OR demand)'
+    min_faves: 8
+    weight: 1.0
+
+  - name: 印度股汇联动
+    query: '(Nifty OR Sensex OR "Indian markets" OR FII) (rupee OR dollar OR outflow OR inflow OR selloff)'
+    min_faves: 10
+    weight: 1.1
+
+  # 出金投诉：需求里优先级最高的类别，但泛化查询抓不到，必须单独设组
+  - name: 出金与提现投诉
+    query: '(India OR Indian OR INR) (broker OR platform OR app) (withdrawal OR withdraw OR payout) (problem OR denied OR delayed OR stuck OR pending OR refused OR blocked OR "not received")'
+    min_faves: 2
+    weight: 2.0
+
+reddit_subreddits:
+  - name: IndiaInvestments
+    weight: 1.5
+  - name: IndianStreetBets
+    weight: 1.2
+  - name: india
+    weight: 0.9
+
+reddit_settings:
+  min_upvotes: 15
+
+serper_fraud_news:
+  enabled: true
+  window_hours: 48
+  tbs: qdr:d2
+  max_items_per_query: 8
+  group_weight: 2.8
+  queries:
+    - name: Serper 印度外汇诈骗
+      query: '(India OR Indian) ("forex trading" OR "forex broker" OR "trading app" OR "investment app") (scam OR fraud OR "fake app" OR unauthorised OR arrested)'
+    - name: Serper 印度出金与假平台
+      query: '(India OR Indian) (broker OR trading platform OR investment app) (withdrawal OR payout OR frozen funds OR phishing OR "fake website")'
+
+# 印度常见荐股/喊单引流话术，追加到公共噪音规则之后
+noise_patterns_extra:
+  - '\b(sure ?shot|jackpot call|tips provider|intraday tips|option tips|calls? given)\b'
+  - '\b(guaranteed returns?|assured (profit|returns?)|double your money)\b'
+  - '\b(join (our )?telegram|paid group|premium group|whatsapp group|dm for tips)\b'
+  - '\b(target hit|booked profit|\d+ points? profit|accuracy \d+%)\b'
+
+# 印度执法/监管信号词，追加到公共信号词之后
+signal_boost_patterns_extra:
+  - '\b(alert list|unauthorised|unauthorized|show cause|lookout notice)\b'
+  - '\b(ed raid|raided|crackdown|attached assets|chargesheet|summons)\b'
+  - '\b(repo rate|crr|slr|mpc meeting)\b'
+
+# ------------------------------------------------------------
+# 外汇主题闸：不命中任一条即丢弃
+# 搜索词只保证"提到过"，拦不住印度政治推特里的 RICE SCAM / GDP 党派宣传
+# ------------------------------------------------------------
+topic_patterns:
+  - '\b(rupee|rupees|INR|USDINR|forex|foreign exchange|currency|currencies)\b'
+  - '\b(RBI|Reserve Bank|SEBI|FEMA|MPC|repo rate|monetary policy)\b'
+  - '\b(dollar|USD|greenback|exchange rate|remittance|forex reserves)\b'
+  - '\b(broker|brokerage|trading (app|platform|account)|demat|MCX|NSE|BSE)\b'
+  - '\b(gold|bullion|crude|commodity|commodities)\b'
+  - '\b(Nifty|Sensex|FII|FPI|capital (inflow|outflow))\b'
+
+# 一手来源：官方机构账号。命中即视为一手来源，可直接支撑 Strong 判定
+official_accounts:
+  - RBI
+  - SEBI_India
+  - FinMinIndia
+  - dir_ed
+  - PIB_India
+
+# 可信媒体域名。用于统计「有几家可信媒体报道」
+trusted_media:
+  - moneycontrol.com
+  - economictimes.indiatimes.com
+  - thehindubusinessline.com
+  - thehindu.com
+  - business-standard.com
+  - livemint.com
+  - indianexpress.com
+  - financialexpress.com
+  - reuters.com
+  - bloomberg.com
+  - ptinews.com

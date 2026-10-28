@@ -1,0 +1,159 @@
+# ============================================================
+# 内容分类体系（三个市场共用）
+#
+# 分类是新流程的第一道工序：先分类，然后「同市场 + 同类别」内才做聚类比对，
+# 类别本身也决定搜索意图加分和编辑相关度。
+#
+# 为什么用强弱信号计分而不是"第一个命中就定类"：
+#   实测单关键词命中太松 —— 顺口提一句 RBI 的行情播报会被判成监管（占到 42%），
+#   长文里出现一个"kerugian(亏损)"就被判成诈骗。改成 strong=3 分、weak=1 分，
+#   取总分最高的类别，机构名这类弱信号必须配上动作词才压得过其他类别。
+#
+# strong = 看到就基本能定性的表述
+# weak   = 只能算旁证，单独出现不足以定类
+# 平分时按下面的排列顺序取前者，所以顺序仍是优先级：
+# 出金投诉排在诈骗前，因为「取不出钱」是更具体的指控，也是最核心的选题。
+# ============================================================
+
+categories:
+  - id: withdrawal
+    name: 出金投诉
+    search_intent: 1.00
+    editorial: 1.00
+    angle: >-
+      读者最想知道：这家平台我能不能碰、我的钱还能不能取出来。写清楚被投诉的是哪家、卡在哪一环（审核/风控/通道）、涉及多少人多少钱、平台方怎么回应。结尾给自查方法：怎么查这家有没有牌照、出金受阻时该保留哪些证据、向哪个机构投诉。
+    strong:
+      - '\b(withdraw\w*|payout|cash ?out)\b.{0,45}\b(problem|issue|denied|refus\w*|delay\w*|stuck|block\w*|fail\w*|scam|not received|pending|reject\w*)\b'
+      - '\b(cannot|can''t|unable to|won''t let me|refus\w+ to)\b.{0,35}\b(withdraw|take out|cash out|pay out)\b'
+      - '\b(frozen|freez\w+|locked|seiz\w+)\b.{0,30}\b(account|funds?|balance|money|deposit)\b'
+      - '(tidak bisa|gagal|susah|sulit|ditolak).{0,18}(wd|withdraw|tarik|penarikan|cairkan|pencairan)'
+      - '(dana|duit|uang|saldo).{0,18}(tidak|belum|gak|nggak).{0,14}(cair|masuk|kembali|bisa ditarik)'
+    weak:
+      - '\b(withdrawal|payout|redemption)\b'
+      - '\b(wd|penarikan|pencairan)\b'
+
+  - id: fraud
+    name: 诈骗
+    search_intent: 1.00
+    editorial: 1.00
+    angle: >-
+      读者最想知道：我会不会是下一个。重点写作案手法的可识别特征——用什么话术拉人、承诺多少收益、资金怎么流转。不要只写抓了谁判了多少年。结尾给识别清单：同类骗局有哪几个共同信号。
+    strong:
+      - '\b(scam|scammer|scammed|scamming|fraud|fraudulent|defraud\w*|ponzi|pyramid scheme)\b'
+      - '\b(fake|bogus|cloned?|impersonat\w+|phishing)\b.{0,30}\b(broker|platform|app|website|firm|account|scheme|sms|message|call|email|link)\b'
+      - '(modus|waspada|hati-hati).{0,30}(penipuan|fake|palsu|phishing|sms|link)'
+      - '\b(money launder\w*|hawala|hundi|illegal (forex|trading|betting))\b'
+      - '(penipuan|penipu|bodong|menipu|tertipu|digelapkan|penggelapan)'
+      - '\b(robot trading|binary option|opsi biner|skema ponzi|investasi bodong)\b'
+    weak:
+      - '\b(victim|duped|cheated|siphon\w+|absconded)\b'
+      - '(korban|kerugian|rugi besar|iming-iming)'
+
+  - id: regulation
+    name: 监管
+    # 只管执法/牌照/合规动作。央行干预、加降息属于行情宏观，不在这里
+    search_intent: 0.95
+    editorial: 1.00
+    angle: >-
+      读者最想知道：这条规定/处罚跟我有没有关系。开头直接给处罚规模和被罚对象类型。写清楚触发处罚的具体行为是什么。结尾给自查路径：在哪能查到被处罚名单、自己用的平台是否在列、监管方的官方查询入口。
+    strong:
+      # 新闻体常先交代主体、背景和对象，监管动作落在 60 个字符之后；60 会把
+      # 明明命中监管查询组的长句判进“其他”。扩大到 140，只作用于“机构+执法
+      # 动作”这一组强信号，仍然必须两类词同时出现，避免把泛泛提机构的行情帖算监管。
+      - '\b(SEBI|OJK|Bappebti|SECP|FIA|FCA|ASIC|CySEC|NFA|Enforcement Directorate|\bED\b|CBI|PPATK|Satgas)\b.{0,140}\b(fine[ds]?|penalt\w*|sanction\w*|ban\w*|suspend\w*|revok\w*|cancel\w*|warn\w*|action|order|probe|investigat\w*|raid\w*|search\w*|seiz\w*|crackdown|summon\w*|notice)\b'
+      - '\b(fine[ds]?|penalt\w*|sanction\w*|banned|suspend\w*|revok\w*|blacklist\w*|alert list|crackdown|raid\w*|seiz\w*)\b.{0,140}\b(broker|platform|firm|company|licen[sc]e|dealer|app|scheme|entity|entities)\b'
+      - '\b(unauthori[sz]ed|unlicensed|illegal)\b.{0,40}\b(broker|platform|forex|trading|dealer|entity|entities|app)\b'
+      - '\b(licen[sc]e[ds]?|licensing|registration)\b.{0,90}\b(grant\w*|approv\w*|reject\w*|revok\w*|cancel\w*|suspend\w*|renew\w*)\b'
+      - '(izin(\s+usaha)?|sanksi|denda).{0,22}(dicabut|diblokir|dijatuhkan|ditetapkan|dibekukan)'
+      # 印尼语新闻常把动词放前面（menetapkan sanksi / mencabut izin），
+      # 只写「名词+被动动词」会漏掉 OJK 通稿这类最有价值的稿子
+      - '(menetapkan|menjatuhkan|mencabut|memblokir|membekukan|mengenakan|menindak).{0,32}(sanksi|denda|izin|hukuman|pemblokiran|entitas)'
+      - '\b(OJK|Bappebti|PPATK|Satgas|SECP|SBP|FIA)\b.{0,70}(sanksi|denda|izin|blokir|cabut|tindak|awasi|pengawasan|penegakan|ilegal|waspada|mencurigakan|kepatuhan)'
+      - '(penegakan hukum|pengawasan|waspada investasi|entitas ilegal|tanpa izin|daftar hitam)'
+    weak:
+      - '\b(regulator|regulatory|regulation|compliance|circular|notification|show cause)\b'
+      - '\b(RBI|SEBI|OJK|Bappebti|SECP|SBP|FIA)\b'
+      - '(regulasi|otoritas|peraturan|kepatuhan)'
+
+  - id: product
+    name: 产品/平台变化
+    search_intent: 0.70
+    editorial: 0.70
+    angle: >-
+      读者最想知道：我的交易成本和条件变了没有。写清楚变的是什么参数、从多少变到多少、什么时候生效、影响哪些品种。结尾给出对持仓成本的具体影响方向。
+    strong:
+      - '\b(launch\w*|roll\w* out|introduc\w+|unveil\w*|now (offers?|available|supports?))\b.{0,50}\b(platform|app|account type|spread|leverage|instrument|pair|feature|product|service)\b'
+      - '\b(spread|leverage|commission|swap|margin requirement|trading hours)\b.{0,35}\b(chang\w+|updat\w+|increas\w+|reduc\w+|cut|rais\w+|revis\w+)\b'
+      - '\b(platform|server|app|system)\b.{0,25}\b(outage|downtime|maintenance|down|crash\w*|glitch)\b'
+      - '(meluncurkan|merilis|fitur baru).{0,28}(aplikasi|platform|produk|layanan)'
+      - '(gangguan|maintenance|down).{0,22}(sistem|aplikasi|platform|server)'
+    weak:
+      - '\b(new feature|beta|upgrade|version)\b'
+
+  - id: broker
+    name: 交易商/平台
+    search_intent: 0.85
+    editorial: 0.90
+    angle: >-
+      读者最想知道：这家还能不能用、我的资金安不安全。写清楚公司发生了什么变动、客户资金如何安排、监管方是否介入。措辞审慎，不对未定性的事做判断。结尾给风险自查点。
+    strong:
+      - '\b(broker|brokerage|prop ?firm|trading platform|exchange)\b.{0,50}\b(shut\w*|clos\w+|exit\w*|acquir\w+|merg\w+|expand\w+|partner\w*|insolven\w*|bankrupt\w*|liquidat\w+|wind\w* (up|down)|ceas\w+)\b'
+      - '\b(ceased operations|stopped accepting|exiting the market|delist\w+)\b'
+      - '(pialang|broker|perusahaan sekuritas).{0,32}(tutup|bangkrut|pailit|akuisisi|merger|ekspansi|berhenti)'
+    weak:
+      - '\b(broker|brokerage|prop ?firm)\b'
+      - '(pialang|broker)'
+
+  - id: macro
+    name: 行情与宏观
+    # 央行干预、加降息、汇率涨跌都归这里，不算监管
+    search_intent: 0.60
+    editorial: 0.75
+    angle: >-
+      读者最想知道：我的持仓会怎么样。写清楚价格/利率的具体变动幅度和触发原因。不要停在'专家认为'，要落到对货币对方向、点差、隔夜利息的影响。结尾给下一个关键时间点：何时公布哪项数据、何时开会议息。
+    strong:
+      - '\b(rupee|rupiah|USDINR|USDIDR|USDPKR|PKR|dollar|currency|exchange rate)\b.{0,45}\b(ris\w+|fall\w*|gain\w*|los[es]\w*|weaken\w*|strengthen\w*|surg\w+|plung\w+|slid\w+|close[ds]?|open\w*|hit\w*|record|high|low|paise|intervention)\b'
+      - '\b(central bank|RBI|BI|SBP|Bank Indonesia|State Bank)\b.{0,45}\b(intervene[ds]?|intervention|sold dollars|bought dollars|rate (cut|hike|decision)|repo rate|policy)\b'
+      - '\b(inflation|CPI|GDP|trade deficit|current account|forex reserves|IMF (programme|program|deal|tranche))\b'
+      - '\b(gold|bullion|crude|oil price)\b.{0,35}\b(ris\w+|fall\w*|surg\w+|record|high|low|rally|drop\w*)\b'
+      # 印尼财经媒体的行情表述很散：ditutup/dibuka 之外还常用 stagnan、perkasa、
+      # tertekan，以及名词形式 penutupan/pembukaan，漏掉这些会让大半行情稿掉进「其他」
+      - '(rupiah|kurs|nilai tukar|dolar|dollar).{0,32}(menguat|melemah|ditutup|dibuka|anjlok|naik|turun|stagnan|perkasa|tertekan|terkoreksi|rebound|penutupan|pembukaan|poin|persen)'
+      - '(inflasi|suku bunga|cadangan devisa|pertumbuhan ekonomi|neraca perdagangan)'
+    weak:
+      - '\b(Nifty|Sensex|IHSG|KSE-?100|bond yield|treasury)\b'
+      - '\b(market|markets|trading session)\b'
+
+  - id: community
+    name: 交易社区
+    # 晒单、心得、技术分析闲聊。搜索意图低，基本不该发稿，保留以便观察舆情
+    search_intent: 0.20
+    editorial: 0.25
+    angle: >-
+      这类内容通常不值得单独成稿。若要写，只写其中反映的普遍认知误区或群体情绪变化，不要复述个人观点和晒单。
+    strong:
+      - '\b(my (trade|setup|entry|target|position)|chart setup|technical analysis|backtest\w*)\b'
+      - '\b(bullish|bearish|support and resistance|breakout|pullback|RSI|MACD|fibonacci)\b'
+      - '\b(trading (psychology|mindset|discipline|journal)|risk management)\b'
+      - '(analisa|analisis) (teknikal|chart|market|harian)'
+      - '\b(cuan|floating|entry point|open posisi|cut loss)\b'
+    weak:
+      - '\b(chart|setup|entry)\b'
+
+fallback:
+  id: other
+  name: 其他
+  search_intent: 0.35
+  editorial: 0.35
+  angle: >-
+    按事实密度组织，第一句给最硬的信息。若素材本身信息量不足，如实写明已知部分，不要注水。
+
+# 强弱信号的分值
+weights:
+  strong: 3
+  weak: 1
+  min_score: 2      # 总分低于此值归入「其他」，防止单个弱信号定类
+
+# 需要额外证据才能升 Strong 的类别。
+# 需求里明确：诈骗、出金、平台指控不因为"负面严重"就直接成为强热点。
+allegation_categories: [withdrawal, fraud, broker]

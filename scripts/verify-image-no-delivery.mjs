@@ -1,0 +1,1 @@
+import fs from 'node:fs';import {wrangler} from './wrangler-bounded.mjs';const r=JSON.parse(await wrangler(['d1','execute','wikifx-signal-hub','--remote','--command',"SELECT state,count(*) n FROM delivery_jobs GROUP BY state",'--json']));fs.writeFileSync('artifacts/facts-images/delivery-verification.json',JSON.stringify(r));console.log(r[0].results);

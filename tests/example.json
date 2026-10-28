@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "source_system": "wikifx-hotspot-radar",
+  "batch_id": "fb4ab9c3-68e8-4ecd-99a2-7e048d66ce14",
+  "snapshot_id": "TH-20261026-093820-example",
+  "data_date": "2026-10-26",
+  "timezone": "Asia/Shanghai",
+  "region_code": "TH",
+  "region_name": "泰国",
+  "selection_scope": "candidate_topics",
+  "revision": 1,
+  "collection_status": "completed",
+  "report_origin": "scheduled",
+  "report_generated_at": "2026-10-26T09:38:20+08:00",
+  "window_hours": 24,
+  "page_no": 1,
+  "page_count": 1,
+  "total_items": 2,
+  "items": [
+    {
+      "topic_id": "example-topic-001",
+      "title": "Example: regional foreign-exchange market monitoring update",
+      "content": "This is a fictional source article used only to demonstrate the API contract. It is not a real news report, a market forecast, or investment advice. No real institution, policy announcement, price, or trading event is represented by this example.\n\nA production sender replaces this field with the verified text of the linked source article. It preserves the original paragraphs and source language while removing navigation, advertising, cookie notices, and unrelated recommendations. The full status is used only when the complete article body has actually been obtained and has not been truncated.\n\nThis final paragraph closes the fictional example article. Production summaries are supplied separately and must never be copied into the content field to pretend that the original article has been retrieved.",
+      "content_format": "text/plain",
+      "content_status": "full",
+      "content_error": null,
+      "content_fetched_at": "2026-10-26T09:39:10+08:00",
+      "summary": "A fictional article demonstrating how verified source text, a separate summary, and an original website link are transmitted together.",
+      "summary_origin": "source",
+      "url": "https://example.com/news/2026/10/26/fx-monitoring-example",
+      "source_name": "Example News (fictional)",
+      "language": "en",
+      "published_at": "2026-10-26T08:20:00+08:00",
+      "discovered_at": "2026-10-26T09:31:10+08:00",
+      "category": "market"
+    },
+    {
+      "topic_id": "example-topic-002",
+      "title": "Example: source article requires authorized access",
+      "content": null,
+      "content_format": "text/plain",
+      "content_status": "unavailable",
+      "content_error": {
+        "code": "access_restricted",
+        "message": "原文访问受限，仅保留允许读取的来源摘要和链接；未绕过访问限制。"
+      },
+      "content_fetched_at": null,
+      "summary": "This fictional feed excerpt illustrates an item whose source article body could not be retrieved.",
+      "summary_origin": "source",
+      "url": "https://example.com/news/2026/10/26/restricted-example",
+      "source_name": "Example News (fictional)",
+      "language": "en",
+      "published_at": "2026-10-26T08:45:00+08:00",
+      "discovered_at": "2026-10-26T09:31:20+08:00",
+      "category": "analysis"
+    }
+  ],
+  "warnings": []
+}

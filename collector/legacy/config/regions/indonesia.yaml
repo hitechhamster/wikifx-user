@@ -1,0 +1,161 @@
+# ============================================================
+# 印尼地区 —— 外汇社媒热点
+#
+# 市场特点：
+#   - 监管方是 BAPPEBTI（期货商品交易监管局）和 OJK（金融服务管理局），
+#     不是 FCA/ASIC，警示名单和吊照消息都走这两家
+#   - "robot trading" 传销案和二元期权诈骗是印尼独有的持续热点
+#     （Net89 / Fahrenheit / DNA Pro / Binomo 系列案件）
+#   - 本地讨论以印尼语为主，量比英文圈小，所以互动门槛要调低
+# ============================================================
+
+region:
+  name: indonesia
+  display: 印尼
+
+x_settings:
+  lang: in                   # 注意：X 用遗留代码 in 表示印尼语，不是 ISO 的 id
+  max_items_per_query: 90
+
+scoring:
+  # 印尼本地账号粉丝量普遍小于英文大V，门槛不下调会把本地信息全滤掉
+  min_author_followers: 100
+  # 本地组是印尼语、国际视角组是英文，两者都要放行。
+  # 只写 id 会把 WSJ 那种"Rupiah exposed to Fed rate-hike"的好稿误杀。
+  require_language: [id, en]
+  # 印尼本地账号互动量远低于英文大V，中位分只有 0.00
+  min_score: 0.08
+
+x_queries:
+  # ---------- 印尼语 ----------
+  - name: 印尼盾与央行
+    query: '(rupiah OR USDIDR OR "Bank Indonesia" OR "BI Rate" OR "suku bunga") (melemah OR menguat OR intervensi OR anjlok OR perkasa)'
+    lang: in
+    min_faves: 4
+    weight: 1.5
+
+  - name: 监管动态BAPPEBTI/OJK
+    query: '(Bappebti OR OJK OR "pialang berjangka" OR "broker forex" OR "izin usaha") (cabut OR blokir OR sanksi OR ilegal OR resmi OR peringatan OR daftar)'
+    lang: in
+    min_faves: 2
+    weight: 2.0
+
+  - name: 诈骗与爆雷
+    query: '("investasi bodong" OR "robot trading" OR "binary option" OR "opsi biner" OR penipuan) (forex OR trading OR investasi OR korban OR tersangka)'
+    lang: in
+    min_faves: 2
+    weight: 1.9
+
+  - name: 外汇黄金交易讨论
+    query: '(trading forex OR "harga emas" OR XAUUSD OR valas) (analisa OR naik OR turun OR rekor OR prediksi)'
+    lang: in
+    min_faves: 4
+    weight: 1.0
+
+  - name: 印尼宏观经济
+    query: '(inflasi OR "ekonomi Indonesia" OR ekspor OR impor OR "cadangan devisa") (rupiah OR dolar OR BI OR pemerintah)'
+    lang: in
+    min_faves: 4
+    weight: 1.2
+
+  # ---------- 英文（国际视角看印尼） ----------
+  - name: 国际视角印尼盾
+    query: '(rupiah OR USDIDR OR "Bank Indonesia" OR "Indonesia central bank") (rate OR intervention OR slides OR weakens OR surges)'
+    lang: en
+    min_faves: 6
+    weight: 1.4
+
+  - name: 国际视角印尼监管
+    query: '(Indonesia OR Indonesian) (forex OR broker OR "binary options" OR scam OR fraud OR Bappebti OR OJK)'
+    lang: en
+    min_faves: 3
+    weight: 1.6
+
+  # 出金投诉：需求里优先级最高的类别，但泛化查询抓不到，必须单独设组
+  - name: 出金与提现投诉
+    query: '(withdraw OR WD OR penarikan OR pencairan) (gagal OR ditolak OR pending OR lama OR "tidak bisa" OR "belum cair" OR bermasalah) (broker OR trading OR investasi OR aplikasi)'
+    lang: in
+    min_faves: 2
+    weight: 2.0
+
+reddit_subreddits:
+  - name: indonesia
+    weight: 1.2
+  - name: finansial
+    weight: 1.5
+
+reddit_settings:
+  min_upvotes: 8             # 印尼版块体量小于英文主版块
+
+# Serper 每日主动发现：社媒没有传播起来的投资骗局，也进入编辑候选队列。
+serper_fraud_news:
+  enabled: true
+  window_hours: 48
+  tbs: qdr:d2
+  max_items_per_query: 8
+  group_weight: 2.8
+  queries:
+    - name: Serper 印尼外汇诈骗
+      query: '(Indonesia OR Indonesian) (forex OR "robot trading" OR "binary option" OR "trading app" OR broker) (penipuan OR "investasi bodong" OR scam OR fraud OR "platform ilegal")'
+    - name: Serper 印尼出金与假平台
+      query: '(Indonesia OR Indonesian) (broker OR trading OR investasi) (penarikan OR pencairan OR "dana tidak cair" OR "platform palsu" OR phishing)'
+
+# 印尼语引流话术，追加到公共噪音规则之后
+noise_patterns_extra:
+  # 官号日常宣传和节日问候。这类内容因为发布者是官方账号会拿到证据满分，
+  # 不滤掉就会天天霸占 Strong 榜首，但它们从来不是可发布的新闻
+  - '\b(halo|hai)\s+(sobat|rekan|teman)'
+  - '(selamat\s+(pagi|siang|sore|malam|hari|memperingati|menunaikan)|hari raya|idul|maulid|natal|tahun baru)'
+  - '(jangan lupa|yuk|ayo)\s+\w{0,12}\s*(follow|ikuti|simak|tonton|daftar|share)'
+  # 非外汇类刑案/社会新闻，跟外汇选题无关
+  - '(lowongan kerja|pelamar kerja|rekrutmen)'
+  - '(kejagung|kejaksaan|narkoba|pembunuhan|begal|pencabulan)'
+  - '(kecelakaan|kebakaran|banjir|gempa|longsor)'
+  - '\b(join grup|gabung grup|grup telegram|grup wa|chat wa|hubungi (saya|kami))\b'
+  - '\b(sinyal gratis|garansi profit|profit konsisten|pasti (cuan|profit)|modal kecil)\b'
+  - '\b(daftar sekarang|link (di|dibio)|klik link|promo|bonus deposit)\b'
+  - '\b(jasa titip|titip dana|kelola dana|admin \d)\b'
+
+# 印尼语新闻信号词，追加到公共信号词之后
+signal_boost_patterns_extra:
+  - '\b(resmi|diblokir|ditangkap|tersangka|dicabut|disita|digerebek)\b'
+  - '\b(peringatan|waspada|ilegal|rugi|kerugian|korban)\b'
+  - '\b(naik|turun|memangkas|menaikkan) (suku bunga|bi rate)\b'
+
+# ------------------------------------------------------------
+# 外汇主题闸：不命中任一条即丢弃
+# r/indonesia 是综合板块，不加这道闸会混进大量社会新闻
+# ------------------------------------------------------------
+topic_patterns:
+  - '\b(rupiah|IDR|USDIDR|valas|valuta asing|kurs|nilai tukar)\b'
+  - '\b(forex|foreign exchange|currency|trading|trader|broker|pialang)\b'
+  - '\b(Bank Indonesia|BI Rate|suku bunga|OJK|Bappebti|Kemendag)\b'
+  - '\b(dolar|dollar|USD|emas|gold|XAUUSD|komoditas)\b'
+  - '\b(investasi|inflasi|ekonomi|devisa|ekspor|impor|saham|IHSG)\b'
+  # 裸的 penipuan/scam 会放进招聘诈骗、贪腐赃款这类非外汇案件，
+  # 只保留本身就特指外汇/投资骗局的词组
+  - '\b(robot trading|binary option|opsi biner|investasi bodong|broker bodong|trading bodong)\b'
+
+# 一手来源：官方机构账号。命中即视为一手来源，可直接支撑 Strong 判定
+official_accounts:
+  - ojkindonesia
+  - bank_indonesia
+  - Bappebti
+  - KemenkeuRI
+  - PPATK_Indonesia
+
+# 可信媒体域名。用于统计「有几家可信媒体报道」
+trusted_media:
+  - kontan.co.id
+  - bisnis.com
+  - cnbcindonesia.com
+  - cnnindonesia.com
+  - detik.com
+  - kompas.com
+  - tempo.co
+  - katadata.co.id
+  - antaranews.com
+  - ojk.go.id
+  - bi.go.id
+  - reuters.com
+  - bloomberg.com
